@@ -27,7 +27,7 @@ class VectorDatabase:
             self.splitter= RecursiveCharacterTextSplitter(chunk_size= self.chunk_size*2,chunk_overlap= self.chunk_size/8,separators=['\nclass ', '\ndef ', '\n\tdef ',"\n\n", "\n", " ", ""])
 
         if mode=="local":
-            self.embeddings=OllamaEmbeddings()  
+            self.embeddings=OllamaEmbeddings(model='mxbai-embed-large')  
         else:
             self.embeddings= OpenAIEmbeddings()
         
