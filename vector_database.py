@@ -10,7 +10,7 @@ import os.path
 
 
 class VectorDatabase:
-    def __init__(self,mode,question_type):
+    def __init__(self,mode,question_type,chunking_strategy):
 
         if question_type=="specific":
             self.chunk_size=200
@@ -19,8 +19,12 @@ class VectorDatabase:
             self.chunk_size=1000
             self.db_path="db_index"
 
-        self.splitter= RecursiveCharacterTextSplitter(chunk_size= self.chunk_size,chunk_overlap= 200,separators=['\nclass ', '\ndef ', '\n\tdef ',"\n\n", "\n", " ", ""])
-        self.parent_splitter= RecursiveCharacterTextSplitter(chunk_size= self.chunk_size*8,chunk_overlap= 200,separators=['\nclass ', '\ndef ', '\n\tdef ',"\n\n", "\n", " ", ""])
+        if chunking_strategy=="Parent":
+            self.db_path=self.db_path+"_parent"
+            self.splitter= RecursiveCharacterTextSplitter(chunk_size= self.chunk_size,chunk_overlap= self.chunk_size/8,separators=['\nclass ', '\ndef ', '\n\tdef ',"\n\n", "\n", " ", ""])
+            self.parent_splitter= RecursiveCharacterTextSplitter(chunk_size= self.chunk_size*8,chunk_overlap= self.chunk_size/8,separators=['\nclass ', '\ndef ', '\n\tdef ',"\n\n", "\n", " ", ""])
+        else:
+            self.splitter= RecursiveCharacterTextSplitter(chunk_size= self.chunk_size*2,chunk_overlap= self.chunk_size/8,separators=['\nclass ', '\ndef ', '\n\tdef ',"\n\n", "\n", " ", ""])
 
         if mode=="local":
             self.embeddings=OllamaEmbeddings()  
@@ -33,14 +37,17 @@ class VectorDatabase:
             self.load_db()
         else:
             self.create_db()
-        
-        self.store=InMemoryStore()
-        self.retriever = ParentDocumentRetriever(
-        vectorstore=self.vector,
-        docstore=self.store,
-        child_splitter=self.splitter,
-        parent_splitter=self.parent_splitter,)
-        self.retriever.add_documents(self.docs)
+
+        if chunking_strategy=="Parent":
+            self.store=InMemoryStore()
+            self.retriever = ParentDocumentRetriever(
+            vectorstore=self.vector,
+            docstore=self.store,
+            child_splitter=self.splitter,
+            parent_splitter=self.parent_splitter,)
+            self.retriever.add_documents(self.docs)
+        else:
+            self.retriever=self.vector.as_retriever()
     
     def prepare_data(self):
         loader = CSVLoader(

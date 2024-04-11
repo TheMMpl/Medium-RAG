@@ -13,11 +13,12 @@ if __name__ == "__main__":
     parser.add_argument("--mode", help="mode - local or external model", type=str)
     parser.add_argument("--query", help="query to be answered", type=str)
     parser.add_argument("--display_db_results", help="view results passed to the llm", type=str)
+    parser.add_argument("--chunking_strategy", help="simple - more performant, parent - potentially provides better context", type=str)
     parser.add_argument("--question_type", help="specific or general, by default general", type=str)
     args = parser.parse_args()
 
     
-    db=VectorDatabase(args.mode,question_type=args.question_type)
+    db=VectorDatabase(args.mode,question_type=args.question_type,chunking_strategy=args.chunking_strategy)
     if args.mode=="local":
         llm=Ollama(model="llama2")
     else:
